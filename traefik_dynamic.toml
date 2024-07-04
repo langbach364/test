@@ -1,0 +1,12 @@
+[http.middlewares.simpleAuth.basicAuth]
+  users = [
+    "admin:" # truy cập trang web https://hostingcanada.org/htpasswd-generator/ để tạo mật khẩu admin
+  ]
+
+[http.routers.api]
+  rule = "Host(`monitor.domain`)" # Thêm hostname monitor vào cấu hình tên miền
+  entrypoints = ["websecure"]
+  middlewares = ["simpleAuth"]
+  service = "api@internal"
+  [http.routers.api.tls]
+    certResolver = "lets-encrypt"

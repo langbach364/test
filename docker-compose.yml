@@ -1,0 +1,39 @@
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    ports:
+      - "8080:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Tự động cấu hình cho các container dựa và mạng
+      - ./traefik.toml:/traefik.toml # Cấu hình traefik
+      - ./traefik_dynamic.toml:/traefik_dynamic.toml # Cấu hình traefik động (cấu hình tự động mỗi khi thay đổi cấu hình mà không cần khởi động)
+      - ./letsencrypt:/letsencrypt # Lưu chứng chỉ lại
+      - "./acme.json:/acme.json" # Lưu thông tin chứng chỉ lại
+    networks:
+      - web
+
+  web-test:
+    build:
+      context: ./
+      dockerfile: ./web.dockerfile
+    container_name: web-test
+    ports:
+      - "5050:5050"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.web-test.entrypoints=websecure"
+      - "traefik.http.routers.web-test.rule=Host(`hostname.donain`)" # Cần điền
+      - "traefik.http.routers.web-test.tls.certresolver=lets-encrypt"
+      - "traefik.http.services.web-test.loadbalancer.server.port=5050"
+    networks:
+      - web
+    depends_on:
+      - traefik
+
+networks:
+  web:
+    name: web
+    driver: bridge
